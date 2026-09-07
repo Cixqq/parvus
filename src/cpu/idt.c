@@ -45,10 +45,9 @@ void init_idt() {
     static idt_t idt[256];
 
     // Create the descriptor that'll be added to the IDT.
-    idt_t de_descriptor = create_idt_entry(
-        (uint64_t)de_handler, 0x08, 0,
-        0x8E); // I know why we need 0xE... Why the fuck are we doing
-               // 0x*8*E????? And why does it crash without that 8????????
+    // I would probably want to make the kernel code segment a constant instead
+    // of hardcoding it.
+    idt_t de_descriptor = create_idt_entry((uint64_t)de_handler, 0x08, 0, 0x8E);
 
     // Add the entries to the IDT.
     add_idt_entry(idt, &de_descriptor, 0x0);
