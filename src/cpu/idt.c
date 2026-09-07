@@ -17,7 +17,6 @@ __attribute__((interrupt)) void de_handler(struct interrupt_frame* frame) {
 // Adding IDT entries to an IDT object. This will be very helpful when we start
 // to scale up the number of interrupts.
 void add_idt_entry(idt_t* source, idt_t* entry, uint8_t index) {
-    // TODO: Implement this function.
     source[index] = *entry;
 }
 
