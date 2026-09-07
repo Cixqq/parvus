@@ -1,4 +1,3 @@
-#include <cpu/gdt.h>
 #include <flanterm/flanterm.h>
 #include <flanterm/flanterm_backends/fb.h>
 #include <lib/memory.h>
@@ -7,7 +6,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "terminal.h"
+#include <cpu/cpu.h>
+#include <cpu/gdt.h>
+#include <cpu/idt.h>
+#include <terminal.h>
 
 // Set base Limine's revision to 6 (latest).
 __attribute__((used, section(".limine_requests"))) static volatile uint64_t
@@ -32,25 +34,6 @@ __attribute((used, section(".limine_requests_start"))) static volatile uint64_t
 
 __attribute((used, section(".limine_requests_end"))) static volatile uint64_t
     limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARKER;
-
-// Pretty much like GDTR.
-typedef struct {
-    uint16_t limit; // The size of the IDT in bytes.
-    uint64_t base;  // The base address of the IDT object.
-} __attribute__((packed)) idtr_t;
-
-// Yoinked from the osdev wiki.
-// https://wiki.osdev.org/Inline_Assembly/Examples#LIDT.
-void load_ldt(idtr_t* idtr) {
-    asm("lidt %0" : : "m"(idtr)); // let the compiler choose an addressing mode.
-}
-
-// Halt function.
-// Basically instructs the CPU to do nothing.
-static void hlt() {
-    while (1)
-        asm("hlt");
-}
 
 // Initializing Limine's framebuffer so we can use it
 // for Flanterm later on and possibly even drawing
@@ -83,6 +66,12 @@ void kmain() {
 
     // Initialize the GDT.
     init_gdt();
+    // Initialize the IDT.
+    init_idt();
+
+    // Force a division by zero.
+    // Uncomment to panic.
+    // force_div_by_zero();
 
     klog("System fully initialized!\r\n");
 

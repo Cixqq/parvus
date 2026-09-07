@@ -23,7 +23,7 @@ else
 endif
 
 # User-controllable flags
-CFLAGS    ?= -g -O2 -pipe -masm=intel
+CFLAGS    ?= -g -O2 -pipe
 CPPFLAGS  ?=
 NASMFLAGS ?= -g
 LDFLAGS   ?=
