@@ -1,0 +1,8 @@
+image.iso
+obj/
+iso_root/
+bin/
+compile_commands.json
+limine-binary/
+dump
+.cache/
