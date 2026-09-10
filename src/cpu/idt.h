@@ -2,16 +2,6 @@
 #define _IDT_H
 #include <stdint.h>
 
-// No idea what's that for but apparently it's required for defining interrupt
-// handlers.
-struct interrupt_frame {
-    uintptr_t ip;
-    uintptr_t cs;
-    uintptr_t flags;
-    uintptr_t sp;
-    uintptr_t ss;
-};
-
 // Pretty much like GDTR.
 typedef struct {
     uint16_t limit; // The size of the IDT in bytes.
@@ -37,5 +27,29 @@ typedef struct {
                        // reserved in the IDT descriptor object.
 } __attribute__((packed)) idt_t;
 
+// Defining the CPU state object. This object will be passed to the ISR with a
+// lot of juicy stuff. We should make sure that since everything is passed to
+// the stack manually in assembly and the stack grows backwards, everything is
+// gonna be flipped.
+typedef struct {
+    // Pushed to the stack via the common function.
+    uint64_t rax, rbx, rcx, rdx, rsi, rdi, rbp;
+    uint64_t r8, r9, r10, r11, r12, r13, r14, r15;
+
+    // Push by us.
+    uint64_t interrupt_number, errno;
+
+    // Pushed by the CPU as per Figure 6-9. IA-32e Mode Stack Usage After
+    // Privilege Level Change of the SDM.
+    uint64_t rip, cs, rflags, rsp, ss;
+} cpu_t;
+
 void init_idt();
+void int_handler();
+void isr_stub();
+
+// We know that an interrupt returns nothing and will get `cpu_t` as the type.
+// Defining a typedef for interrupt handlers.
+// We love function pointers in C.
+typedef void (*isr_t)(cpu_t* frame);
 #endif // #_IDT_H

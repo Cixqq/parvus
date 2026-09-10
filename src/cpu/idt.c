@@ -2,17 +2,27 @@
 #include <cpu/idt.h>
 #include <terminal.h>
 
-// START: Pasted blindly from the wiki.
-// TODO: Understand whatever is written below.
-// "Division Error" Interrupt handler.
-// This is our first handler and it's job is very easy; if we catch a
-// division-by-zero error, we panic.
-__attribute__((interrupt)) void de_handler(struct interrupt_frame* frame) {
-    (void)frame;
+// Simple panic function.
+void panic(cpu_t* frame) {
+    (void)frame; // Once we get a formatting library (or make our own custom
+                 // formatter) we will print the CPU state here.
     kerror("PANIK.\r\n");
     hlt();
 }
-// END.
+
+// "Division Error" Interrupt handler.
+// This is our first handler and it's job is very easy; if we catch a
+// division-by-zero error, we panic.
+void de_handler(cpu_t* frame) {
+    panic(frame);
+}
+
+// "Double Fault" Interrupt handler.
+// Not really a proper implementation or anything.
+// Just wanna experiment a little bit with it.
+void df_handler(cpu_t* frame) {
+    panic(frame);
+}
 
 // Adding IDT entries to an IDT object. This will be very helpful when we start
 // to scale up the number of interrupts.
@@ -38,19 +48,37 @@ idt_t create_idt_entry(uint64_t offset, uint16_t segment_selector, uint8_t ist,
     return entry;
 }
 
+// The stub functions we made and exported in assembly.
+extern void* interrupt_stub_table[256];
+// The real interrupt functions.
+isr_t interrupt_table[256];
+
+// Fancy helper to make registering new ISR's a tad bit easier.
+void register_isr(uint8_t interrupt_number, isr_t isr) {
+    interrupt_table[interrupt_number] = isr;
+}
+
 // Add the IDT entries and execute LIDT.
 void init_idt() {
     // Initialize the IDT object. The Intel SDM mandates that the IDT has 256
     // entries.
     static idt_t idt[256];
 
-    // Create the descriptor that'll be added to the IDT.
-    // I would probably want to make the kernel code segment a constant instead
-    // of hardcoding it.
-    idt_t de_descriptor = create_idt_entry((uint64_t)de_handler, 0x08, 0, 0x8E);
+    // Looping through the IDT and propagating it.
+    for (int i = 0; i < 256; ++i) {
+        // Create the descriptor that'll be added to the IDT.
+        // I would probably want to make the kernel code segment a constant
+        // instead of hardcoding it.
+        idt_t isr_descriptor =
+            create_idt_entry((uint64_t)interrupt_stub_table[i], 0x08, 0, 0x8E);
 
-    // Add the entries to the IDT.
-    add_idt_entry(idt, &de_descriptor, 0x0);
+        // Add the entries to the IDT.
+        add_idt_entry(idt, &isr_descriptor, i);
+    }
+
+    // Registering the ISR's.
+    register_isr(0x0, de_handler);
+    register_isr(0x08, df_handler);
 
     // Initialize the IDTR object and execute LIDT.
     idtr_t idtr = {.base = (uint64_t)&idt,
