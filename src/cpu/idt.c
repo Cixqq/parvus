@@ -65,7 +65,7 @@ void init_idt() {
     static idt_t idt[256];
 
     // Looping through the IDT and propagating it.
-    for (int i = 0; i < 256; ++i) {
+    for (size_t i = 0; i < 256; ++i) {
         // Create the descriptor that'll be added to the IDT.
         // I would probably want to make the kernel code segment a constant
         // instead of hardcoding it.
