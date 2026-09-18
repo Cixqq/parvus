@@ -62,7 +62,7 @@ void register_isr(uint8_t interrupt_number, isr_t isr) {
 void init_idt() {
     // Initialize the IDT object. The Intel SDM mandates that the IDT has 256
     // entries.
-    static idt_t idt[256];
+    static idt_t idt[256] = {0};
 
     // Looping through the IDT and propagating it.
     for (size_t i = 0; i < 256; ++i) {

@@ -1,6 +1,5 @@
 #include <flanterm/flanterm.h>
 #include <flanterm/flanterm_backends/fb.h>
-#include <lib/memory.h>
 #include <limine.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -9,6 +8,8 @@
 #include <cpu/cpu.h>
 #include <cpu/gdt.h>
 #include <cpu/idt.h>
+#include <lib/memory.h>
+#include <memory/bitmap_allocator.h>
 #include <terminal.h>
 
 // Set base Limine's revision to 6 (latest).
@@ -63,6 +64,11 @@ void kmain() {
     if (!init_terminal(framebuffer))
         goto halt;
     klog("Flanterm successfully initialized.\r\n");
+
+    // Initialize the allocator.
+    init_mem();
+    // Uncomment to run a test suite for the allocator.
+    // test_allocator();
 
     // Initialize the GDT.
     init_gdt();
